@@ -3,10 +3,11 @@
 ZeroWall is a modular, production-ready CLI-based host firewall tool for Linux that simplifies `iptables` management.
 
 ## 🚀 Features
-- **Simple Interface**: Easy-to-remember commands like `allow`, `block`, and `status`.
-- **Modular Design**: Separated CLI, Engine, and Controller layers.
+- **Standardized Interface**: Clean, professional CLI mirroring modern tools.
+- **Firewall Zones**: Group rules into logical zones like `public`, `home`, and `work`.
+- **Rule Persistence**: Optional `--permanent` flag to save rules across reboots.
+- **Fail-Safe**: Maintains established connections during resets to prevent lockouts.
 - **Production Ready**: Full logging to `/var/log/zerowall/` and support for Debian packaging.
-- **Fail-Safe**: Maintains established connections during resets.
 
 ## 📦 Installation Methods
 
@@ -29,23 +30,26 @@ sudo ./scripts/install.sh
 ## 🛠️ Usage
 
 ```bash
-# Allow SSH
-sudo zerowall allow 22
+# List all active settings
+sudo zerowall --list-all
 
-# Block a malicious IP
-sudo zerowall block 192.168.1.50
+# Show open ports & services
+sudo zerowall --list-ports
+sudo zerowall --list-services
 
-# Unblock an IP
-sudo zerowall unblock 192.168.1.50
+# Allow a specific port
+sudo zerowall allow 80
 
-# Check status
-sudo zerowall status
+# Block/Unblock an IP
+sudo zerowall block 1.2.3.4
+sudo zerowall unblock 1.2.3.4
 
-# Reset to secure default (DROP all incoming)
-sudo zerowall reset
+# Save rules permanently
+sudo zerowall allow 443 --permanent
 
-# View logs
-sudo zerowall logs
+# Reload/Reset
+sudo zerowall --reload
+sudo zerowall --reset
 ```
 
 ## 📄 Documentation
