@@ -56,11 +56,17 @@ class IptablesController:
         return self.run_command(cmd)
 
     def save_rules(self, path):
-        """Saves current iptables rules to a file."""
+        """Saves current iptables rules to a file with secure permissions."""
         cmd = ["iptables-save"]
         output = self.run_command(cmd)
-        with open(path, 'w') as f:
+        
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        
+        # Write with 0600 permissions
+        with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as f:
             f.write(output)
+            
         return f"Rules saved to {path}"
 
     def restore_rules(self, path):

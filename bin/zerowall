@@ -57,20 +57,24 @@ Examples:
     subparsers = parser.add_subparsers(dest='command', title='Commands', metavar='') 
 
     # allow
-    allow_parser = subparsers.add_parser('allow', help='Allow incoming traffic on a specific port', usage='zerowall allow <port>')
-    allow_parser.add_argument('port', type=int, help='Port number')
-    allow_parser.add_argument('--protocol', choices=['tcp', 'udp'], default='tcp', help='Protocol (default: tcp)')
+    allow_parser = subparsers.add_parser('allow', help='Allow incoming traffic on a specific port or range', usage='zerowall allow <port|range> [--interface <iface>]')
+    allow_parser.add_argument('port', help='Port number or range (e.g., 80 or 80-90 or 80:90)')
+    allow_parser.add_argument('--protocol', choices=['tcp', 'udp', 'icmp', 'all'], default='tcp', help='Protocol (default: tcp)')
+    allow_parser.add_argument('--interface', help='Network interface (e.g., eth0)', metavar='<IFACE>')
 
     # block
-    block_parser = subparsers.add_parser('block', help='Block traffic from a specified IP address', usage='zerowall block <ip>')
+    block_parser = subparsers.add_parser('block', help='Block traffic from a specified IP address', usage='zerowall block <ip> [--interface <iface>]')
     block_parser.add_argument('ip', help='IP address to block')
+    block_parser.add_argument('--interface', help='Network interface to bind rule', metavar='<IFACE>')
 
     # unblock
-    unblock_parser = subparsers.add_parser('unblock', help='Remove a block rule for a specified IP address', usage='zerowall unblock <ip>')
+    unblock_parser = subparsers.add_parser('unblock', help='Remove a block rule for a specified IP address', usage='zerowall unblock <ip> [--interface <iface>]')
     unblock_parser.add_argument('ip', help='IP address to unblock')
+    unblock_parser.add_argument('--interface', help='Network interface rule was bound to', metavar='<IFACE>')
 
     # status
-    subparsers.add_parser('status', help='Display the current firewall status (raw output)')
+    status_parser = subparsers.add_parser('status', help='Display the current firewall status')
+    status_parser.add_argument('--stats', action='store_true', help='Show rule statistics (packet/byte counters)')
 
     # Global Options
     global_group = parser.add_argument_group('Global Options')
@@ -82,6 +86,7 @@ Examples:
     info_group.add_argument('--list-all', action='store_true', help='Display all active firewall settings')
     info_group.add_argument('--list-ports', action='store_true', help='Display all currently open ports')
     info_group.add_argument('--list-services', action='store_true', help='Display all enabled firewall services')
+    info_group.add_argument('--stats', action='store_true', help='Show rule statistics with listing commands')
     
     # Zone Management
     zone_group = parser.add_argument_group('Zone Management')
@@ -107,7 +112,20 @@ Examples:
 
     engine = FirewallEngine()
 
+    from core.validators import validate_ip, validate_zone
+
     try:
+        # Validate zone if provided
+        if args.zone and not validate_zone(args.zone):
+            print(f"Error: Invalid zone name '{args.zone}'. Use alphanumeric characters only.")
+            sys.exit(1)
+
+        # Validate IP for relevant commands
+        if args.command in ['block', 'unblock']:
+            if not validate_ip(args.ip):
+                print(f"Error: Invalid IPv4 address '{args.ip}'.")
+                sys.exit(1)
+
         # Handle Flags First
         if args.reload:
             print(engine.reload_firewall())
@@ -148,13 +166,13 @@ Examples:
 
         # Handle Commands
         if args.command == 'allow':
-            print(engine.allow_port(args.port, args.protocol, zone=args.zone, permanent=args.permanent))
+            print(engine.allow_port(args.port, args.protocol, zone=args.zone, interface=args.interface, permanent=args.permanent))
         elif args.command == 'block':
-            print(engine.block_ip(args.ip, zone=args.zone, permanent=args.permanent))
+            print(engine.block_ip(args.ip, zone=args.zone, interface=args.interface, permanent=args.permanent))
         elif args.command == 'unblock':
-            print(engine.unblock_ip(args.ip, zone=args.zone, permanent=args.permanent))
+            print(engine.unblock_ip(args.ip, zone=args.zone, interface=args.interface, permanent=args.permanent))
         elif args.command == 'status':
-            print(engine.get_status(zone=args.zone))
+            print(engine.get_status(zone=args.zone, stats=args.stats))
         elif args.command == 'reset':
             # Confirmation for reset
             confirm = input("Are you sure you want to reset the firewall? This will set default policy to DROP. [y/N]: ")

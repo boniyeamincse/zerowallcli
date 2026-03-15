@@ -1,5 +1,6 @@
 from .iptables_controller import IptablesController
 from .logger import logger
+from .validators import validate_ip, validate_zone, sanitize_port, validate_interface, validate_protocol
 
 import os
 import json
@@ -36,6 +37,11 @@ class FirewallEngine:
     def _get_chain(self, zone):
         if not zone:
             return "INPUT"
+        
+        if not validate_zone(zone):
+            logger.error(f"Invalid zone name provided: {zone}")
+            raise ValueError(f"Invalid zone name: {zone}. Use alphanumeric characters only.")
+
         zone_chain = f"ZW-ZONE-{zone.upper()}"
         # Check if chain exists first to avoid noisy error logs
         try:
@@ -49,10 +55,22 @@ class FirewallEngine:
             self.controller.append_rule("INPUT", jump_params)
         return zone_chain
 
-    def allow_port(self, port, protocol='tcp', zone=None, permanent=False):
-        """Allows incoming traffic on a specific port."""
+    def allow_port(self, port, protocol='tcp', zone=None, interface=None, permanent=False):
+        """Allows incoming traffic on a specific port or port range."""
+        sanitized_port = sanitize_port(port)
+        if sanitized_port is None:
+            raise ValueError(f"Invalid port or range: {port}")
+        
+        if not validate_protocol(protocol):
+            raise ValueError(f"Invalid protocol: {protocol}")
+            
+        if interface and not validate_interface(interface):
+            raise ValueError(f"Invalid interface name: {interface}")
+
         chain = self._get_chain(zone)
-        params = ["-p", protocol, "--dport", str(port), "-j", "ACCEPT"]
+        params = ["-p", protocol, "--dport", sanitized_port, "-j", "ACCEPT"]
+        if interface:
+            params = ["-i", interface] + params
         
         if self.controller.check_rule_exists(chain, params):
             return f"Port {port}/{protocol} is already allowed in zone {zone or 'default'}."
@@ -64,10 +82,19 @@ class FirewallEngine:
         logger.info(f"Successfully allowed port {port}/{protocol} in zone {zone or 'default'}.")
         return f"Successfully allowed port {port}/{protocol} in zone {zone or 'default'}."
 
-    def block_ip(self, ip, zone=None, permanent=False):
+    def block_ip(self, ip, zone=None, interface=None, permanent=False):
         """Blocks all traffic from a specific IP address."""
+        if not validate_ip(ip):
+            raise ValueError(f"Invalid IPv4 address: {ip}")
+            
+        if interface and not validate_interface(interface):
+            raise ValueError(f"Invalid interface name: {interface}")
+
         chain = self._get_chain(zone)
         params = ["-s", ip, "-j", "DROP"]
+        if interface:
+            params = ["-i", interface] + params
+            
         if self.controller.check_rule_exists(chain, params):
             return f"IP {ip} is already blocked in zone {zone or 'default'}."
             
@@ -77,10 +104,19 @@ class FirewallEngine:
         logger.info(f"Successfully blocked IP: {ip} in zone {zone or 'default'}.")
         return f"Successfully blocked IP: {ip} in zone {zone or 'default'}."
 
-    def unblock_ip(self, ip, zone=None, permanent=False):
+    def unblock_ip(self, ip, zone=None, interface=None, permanent=False):
         """Removes a block rule for a specific IP address."""
+        if not validate_ip(ip):
+            raise ValueError(f"Invalid IPv4 address: {ip}")
+            
+        if interface and not validate_interface(interface):
+            raise ValueError(f"Invalid interface name: {interface}")
+
         chain = self._get_chain(zone)
         params = ["-s", ip, "-j", "DROP"]
+        if interface:
+            params = ["-i", interface] + params
+            
         if not self.controller.check_rule_exists(chain, params):
             return f"IP {ip} is not currently blocked in zone {zone or 'default'}."
             
@@ -90,9 +126,11 @@ class FirewallEngine:
         logger.info(f"Successfully unblocked IP: {ip} in zone {zone or 'default'}.")
         return f"Successfully unblocked IP: {ip} in zone {zone or 'default'}."
 
-    def get_status(self, zone=None):
-        """Returns the current status of the firewall (raw iptables)."""
+    def get_status(self, zone=None, stats=False):
+        """Returns the current status of the firewall."""
         chain = self._get_chain(zone) if zone else None
+        # Statistics are handled by -v flag which is already in list_rules
+        # But we could filter the output if needed.
         return self.controller.list_rules(chain)
 
     def list_all(self, zone=None):

@@ -6,33 +6,34 @@ LOG_FILE = "/var/log/zerowall/firewall.log"
 LOG_DIR = os.path.dirname(LOG_FILE)
 
 def setup_logger():
-    """Sets up the application logger."""
+    """Sets up the application logger with secure permissions."""
     log_path = "/var/log/zerowall/firewall.log"
     log_dir = os.path.dirname(log_path)
-
-    # Ensure log directory exists
-    try:
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir, exist_ok=True)
-    except Exception as e:
-        print(f"Error creating log directory {log_dir}: {e}", file=sys.stderr)
-        # Fallback to current directory if /var/log/zerowall is not writable
-        log_path = "firewall.log"
-
     logger = logging.getLogger("ZeroWall")
     logger.setLevel(logging.INFO)
-
+    
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
 
     # File Handler
     try:
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir, exist_ok=True)
+        
+        # Open file with 0600 permissions if it doesn't exist
+        if not os.path.exists(log_path):
+            fd = os.open(log_path, os.O_WRONLY | os.O_CREAT, 0o600)
+            os.close(fd)
+        else:
+            # Ensure existing file is 0600
+            os.chmod(log_path, 0o600)
+
         fh = logging.FileHandler(log_path)
         fh.setFormatter(formatter)
         logger.addHandler(fh)
     except Exception as e:
-        print(f"Warning: Could not write to log file {log_path}: {e}", file=sys.stderr)
+        print(f"Warning: Could not setup secure file logging: {e}. Logging to console only.", file=sys.stderr)
 
     # Console Handler
     ch = logging.StreamHandler(sys.stdout)

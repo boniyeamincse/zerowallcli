@@ -4,3 +4,4 @@ __pycache__/
 *.deb
 *.buildinfo
 *.changes
+issues/
