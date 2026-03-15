@@ -1,0 +1,15 @@
+Source: zerowall
+Section: utils
+Priority: optional
+Maintainer: ZeroWall Team <support@zerowall.io>
+Build-Depends: debhelper-compat (= 13), python3
+Standards-Version: 4.5.0
+Homepage: https://github.com/zerowall/zerowallcli
+
+Package: zerowall
+Architecture: all
+Depends: python3, iptables, ${python3:Depends}, ${misc:Depends}
+Description: Lightweight CLI Linux Firewall
+ ZeroWall is a modular, lightweight CLI firewall management tool for Linux. 
+ It provides a user-friendly abstraction over iptables to manage host-based 
+ security policies.

@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@ --with python3
+
+override_dh_auto_build:
+	# No build step needed for Python scripts
+
+override_dh_auto_install:
+	mkdir -p debian/zerowall/usr/bin
+	mkdir -p debian/zerowall/usr/lib/zerowall/core
+	install -m 755 bin/zerowall debian/zerowall/usr/bin/zerowall
+	install -m 644 core/*.py debian/zerowall/usr/lib/zerowall/core/
+	# Create log directory in postinst

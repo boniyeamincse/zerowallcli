@@ -1,0 +1,2 @@
+bin/zerowall usr/bin
+core/*.py usr/lib/zerowall/core

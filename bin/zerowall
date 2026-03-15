@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+import sys
+import os
+import argparse
+
+# Add the project root to sys.path to allow relative imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from core.firewall_engine import FirewallEngine
+from core.logger import logger
+
+VERSION = "1.0.0"
+
+def check_root():
+    """Checks if the script is running with root privileges."""
+    if os.geteuid() != 0:
+        print("Error: ZeroWall must be run with root privileges (sudo).")
+        sys.exit(1)
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="ZeroWall - Lightweight CLI Linux Firewall",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  zerowall allow 22
+  zerowall block 192.168.1.100
+  zerowall unblock 192.168.1.100
+  zerowall status
+  zerowall reset
+  zerowall logs
+        """
+    )
+
+    parser.add_argument('-v', '--version', action='version', version=f"ZeroWall v{VERSION}")
+    
+    subparsers = parser.add_subparsers(dest='command', help='Commands')
+
+    # allow
+    allow_parser = subparsers.add_parser('allow', help='Allow incoming traffic on a port')
+    allow_parser.add_argument('port', type=int, help='Port number')
+    allow_parser.add_argument('--protocol', choices=['tcp', 'udp'], default='tcp', help='Protocol (default: tcp)')
+
+    # block
+    block_parser = subparsers.add_parser('block', help='Block traffic from an IP')
+    block_parser.add_argument('ip', help='IP address to block')
+
+    # unblock
+    unblock_parser = subparsers.add_parser('unblock', help='Unblock traffic from an IP')
+    unblock_parser.add_argument('ip', help='IP address to unblock')
+
+    # status
+    subparsers.add_parser('status', help='Show firewall status')
+
+    # reset
+    subparsers.add_parser('reset', help='Reset firewall to default policy')
+
+    # logs
+    subparsers.add_parser('logs', help='Show firewall logs')
+
+    args = parser.parse_args()
+
+    if not args.command:
+        parser.print_help()
+        sys.exit(0)
+
+    # All commands except 'version' and 'help' (handled by argparse) require root
+    check_root()
+
+    engine = FirewallEngine()
+
+    try:
+        if args.command == 'allow':
+            print(engine.allow_port(args.port, args.protocol))
+        elif args.command == 'block':
+            print(engine.block_ip(args.ip))
+        elif args.command == 'unblock':
+            print(engine.unblock_ip(args.ip))
+        elif args.command == 'status':
+            print(engine.get_status())
+        elif args.command == 'reset':
+            # Confirmation for reset
+            confirm = input("Are you sure you want to reset the firewall? This will set default policy to DROP. [y/N]: ")
+            if confirm.lower() == 'y':
+                print(engine.reset_firewall())
+            else:
+                print("Reset cancelled.")
+        elif args.command == 'logs':
+            log_file = "/var/log/zerowall/firewall.log"
+            if os.path.exists(log_file):
+                with open(log_file, 'r') as f:
+                    print(f.read())
+            else:
+                print("No logs found.")
+    except Exception as e:
+        logger.error(f"Error executing command {args.command}: {e}")
+        print(f"Error: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
