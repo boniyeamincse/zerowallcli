@@ -20,7 +20,16 @@ A quick reference guide for managing your Linux firewall with ZeroWall.
 
 - `-h, --help`: Show help message and exit.
 - `-v, --version`: Show program version.
-- `--protocol [tcp\|udp]`: Specify protocol for `allow` (default: tcp).
+- `--protocol [tcp|udp]`: Specify protocol for `allow` (default: tcp).
+- `--zone [zone]`: Specify a firewall zone (e.g., public, home, work).
+- `--permanent`: Save the rule to permanent storage.
+- `--reload`: Reload rules from permanent storage.
+- `--list-all`: List all active settings (use with `--zone`).
+- `--list-ports`: List only open ports.
+- `--list-services`: List enabled services.
+- `--get-zones`: Show all available zones.
+- `--get-active-zones`: Show zones with active rules.
+- `--get-default-zone`: Show the default zone.
 
 ## 💡 Common Scenarios
 

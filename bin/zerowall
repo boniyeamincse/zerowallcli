@@ -34,6 +34,17 @@ Examples:
 
     parser.add_argument('-v', '--version', action='version', version=f"ZeroWall v{VERSION}")
     
+    # Flags (firewall-cmd style)
+    parser.add_argument('--list-all', action='store_true', help='List all active settings')
+    parser.add_argument('--list-ports', action='store_true', help='List only open ports')
+    parser.add_argument('--list-services', action='store_true', help='List only enabled services')
+    parser.add_argument('--reload', action='store_true', help='Reload firewall rules')
+    parser.add_argument('--permanent', action='store_true', help='Make changes permanent')
+    parser.add_argument('--zone', help='Check or apply to a specific zone')
+    parser.add_argument('--get-active-zones', action='store_true', help='Show active zones')
+    parser.add_argument('--get-zones', action='store_true', help='Show all available zones')
+    parser.add_argument('--get-default-zone', action='store_true', help='Show default zone')
+
     subparsers = parser.add_subparsers(dest='command', help='Commands')
 
     # allow
@@ -52,15 +63,6 @@ Examples:
     # status
     subparsers.add_parser('status', help='Show firewall status (raw)')
 
-    # list-all
-    subparsers.add_parser('list-all', help='List all active settings')
-
-    # list-ports
-    subparsers.add_parser('list-ports', help='List only open ports')
-
-    # list-services
-    subparsers.add_parser('list-services', help='List only enabled services')
-
     # reset
     subparsers.add_parser('reset', help='Reset firewall to default policy')
 
@@ -69,7 +71,7 @@ Examples:
 
     args = parser.parse_args()
 
-    if not args.command:
+    if not args.command and not any([args.list_all, args.list_ports, args.list_services, args.reload, args.get_active_zones, args.get_zones, args.get_default_zone]):
         parser.print_help()
         sys.exit(0)
 
@@ -79,20 +81,44 @@ Examples:
     engine = FirewallEngine()
 
     try:
+        # Handle Flags First
+        if args.reload:
+            print(engine.reload_firewall())
+            sys.exit(0)
+        
+        if args.get_active_zones:
+            print(engine.get_active_zones())
+            sys.exit(0)
+            
+        if args.get_zones:
+            print(engine.get_zones())
+            sys.exit(0)
+            
+        if args.get_default_zone:
+            print(engine.get_default_zone())
+            sys.exit(0)
+
+        if args.list_all:
+            print(engine.list_all(zone=args.zone))
+            sys.exit(0)
+            
+        if args.list_ports:
+            print(engine.list_ports(zone=args.zone))
+            sys.exit(0)
+            
+        if args.list_services:
+            print(engine.list_services(zone=args.zone))
+            sys.exit(0)
+
+        # Handle Commands
         if args.command == 'allow':
-            print(engine.allow_port(args.port, args.protocol))
+            print(engine.allow_port(args.port, args.protocol, zone=args.zone, permanent=args.permanent))
         elif args.command == 'block':
-            print(engine.block_ip(args.ip))
+            print(engine.block_ip(args.ip, zone=args.zone, permanent=args.permanent))
         elif args.command == 'unblock':
-            print(engine.unblock_ip(args.ip))
+            print(engine.unblock_ip(args.ip, zone=args.zone, permanent=args.permanent))
         elif args.command == 'status':
-            print(engine.get_status())
-        elif args.command == 'list-all':
-            print(engine.list_all())
-        elif args.command == 'list-ports':
-            print(engine.list_ports())
-        elif args.command == 'list-services':
-            print(engine.list_services())
+            print(engine.get_status(zone=args.zone))
         elif args.command == 'reset':
             # Confirmation for reset
             confirm = input("Are you sure you want to reset the firewall? This will set default policy to DROP. [y/N]: ")

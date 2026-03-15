@@ -1,4 +1,5 @@
 import subprocess
+import os
 from .logger import logger
 
 class IptablesController:
@@ -34,10 +35,46 @@ class IptablesController:
     def list_rules(self, chain=None):
         """Lists current firewall rules."""
         if chain:
+            # For zones, we use custom chains
             cmd = ["iptables", "-L", chain, "-n", "-v"]
         else:
             cmd = ["iptables", "-L", "-n", "-v"]
         return self.run_command(cmd)
+
+    def create_chain(self, chain):
+        """Creates a custom chain."""
+        try:
+            cmd = ["iptables", "-N", chain]
+            self.run_command(cmd)
+        except RuntimeError:
+            # Chain might already exist
+            pass
+
+    def delete_chain(self, chain):
+        """Deletes a custom chain."""
+        cmd = ["iptables", "-X", chain]
+        return self.run_command(cmd)
+
+    def save_rules(self, path):
+        """Saves current iptables rules to a file."""
+        cmd = ["iptables-save"]
+        output = self.run_command(cmd)
+        with open(path, 'w') as f:
+            f.write(output)
+        return f"Rules saved to {path}"
+
+    def restore_rules(self, path):
+        """Restores iptables rules from a file."""
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Backup file not found: {path}")
+        
+        # Use subprocess.run directly for pipe
+        try:
+            with open(path, 'r') as f:
+                subprocess.run(["iptables-restore"], stdin=f, check=True)
+            return "Rules reloaded successfully."
+        except Exception as e:
+            raise RuntimeError(f"Failed to restore rules: {e}")
 
     def flush_chain(self, chain):
         """Flushes all rules from a chain."""
