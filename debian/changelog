@@ -1,3 +1,13 @@
+zerowallcli (1.1.0-1) unstable; urgency=low
+
+  * Added support for Firewall Zones (--zone, --get-zones, etc.).
+  * Implemented Rule Persistence (--permanent, --reload).
+  * Standardized CLI help and documentation formatting.
+  * Added specialized listing commands (--list-all, --list-ports, --list-services).
+  * Improved iptables controller with custom chain and save/restore support.
+
+ -- ZeroWall Team <support@zerowall.io>  Sun, 15 Mar 2026 10:15:00 +0600
+
 zerowallcli (1.0.0-1) unstable; urgency=low
 
   * Initial release.
