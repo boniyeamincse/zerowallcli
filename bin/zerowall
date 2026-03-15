@@ -19,32 +19,45 @@ def check_root():
 
 def main():
     parser = argparse.ArgumentParser(
-        description="ZeroWall - Lightweight CLI Linux Firewall",
+        prog="zerowall",
+        description="Zerowall - Simple Firewall Management CLI",
         formatter_class=argparse.RawDescriptionHelpFormatter,
+        add_help=False,
         epilog="""
 Examples:
-  zerowall allow 22
-  zerowall block 192.168.1.100
-  zerowall unblock 192.168.1.100
-  zerowall status
-  zerowall reset
-  zerowall logs
+  zerowall --list-all
+  zerowall --list-ports
+  zerowall --list-services
+  zerowall --zone=public --list-all
+  zerowall --permanent --list-all
+  zerowall --reload
         """
     )
 
-    parser.add_argument('-v', '--version', action='version', version=f"ZeroWall v{VERSION}")
+    # Custom Help and Version
+    parser.add_argument('--help', action='help', help='Show this help message')
+    parser.add_argument('--version', action='version', version=f"ZeroWall v{VERSION}")
     
-    # Flags (firewall-cmd style)
-    parser.add_argument('--list-all', action='store_true', help='List all active settings')
-    parser.add_argument('--list-ports', action='store_true', help='List only open ports')
-    parser.add_argument('--list-services', action='store_true', help='List only enabled services')
-    parser.add_argument('--reload', action='store_true', help='Reload firewall rules')
-    parser.add_argument('--permanent', action='store_true', help='Make changes permanent')
-    parser.add_argument('--zone', help='Check or apply to a specific zone')
-    parser.add_argument('--get-active-zones', action='store_true', help='Show active zones')
-    parser.add_argument('--get-zones', action='store_true', help='Show all available zones')
-    parser.add_argument('--get-default-zone', action='store_true', help='Show default zone')
+    # Information Commands
+    info_group = parser.add_argument_group('Information Commands')
+    info_group.add_argument('--list-all', action='store_true', help='List all active firewall settings')
+    info_group.add_argument('--list-ports', action='store_true', help='Show all open ports')
+    info_group.add_argument('--list-services', action='store_true', help='Show all enabled services')
+    
+    # Zone Management
+    zone_group = parser.add_argument_group('Zone Management')
+    zone_group.add_argument('--get-zones', action='store_true', help='List all available zones')
+    zone_group.add_argument('--get-active-zones', action='store_true', help='Show currently active zones')
+    zone_group.add_argument('--get-default-zone', action='store_true', help='Show default firewall zone')
+    zone_group.add_argument('--zone', help='Check configuration for a specific zone')
 
+    # Firewall Control
+    control_group = parser.add_argument_group('Firewall Control')
+    control_group.add_argument('--reload', action='store_true', help='Reload firewall rules')
+    control_group.add_argument('--reset', action='store_true', help='Reset firewall configuration')
+    control_group.add_argument('--permanent', action='store_true', help='Make changes permanent (use with commands)')
+
+    # Allow/Block/Unblock (Subcommands)
     subparsers = parser.add_subparsers(dest='command', help='Commands')
 
     # allow
@@ -63,15 +76,9 @@ Examples:
     # status
     subparsers.add_parser('status', help='Show firewall status (raw)')
 
-    # reset
-    subparsers.add_parser('reset', help='Reset firewall to default policy')
-
-    # logs
-    subparsers.add_parser('logs', help='Show firewall logs')
-
     args = parser.parse_args()
 
-    if not args.command and not any([args.list_all, args.list_ports, args.list_services, args.reload, args.get_active_zones, args.get_zones, args.get_default_zone]):
+    if not args.command and not any([args.list_all, args.list_ports, args.list_services, args.reload, args.get_active_zones, args.get_zones, args.get_default_zone, args.reset]):
         parser.print_help()
         sys.exit(0)
 
@@ -96,6 +103,15 @@ Examples:
             
         if args.get_default_zone:
             print(engine.get_default_zone())
+            sys.exit(0)
+
+        if args.reset:
+            # Confirmation for reset
+            confirm = input("Are you sure you want to reset the firewall? This will set default policy to DROP. [y/N]: ")
+            if confirm.lower() == 'y':
+                print(engine.reset_firewall())
+            else:
+                print("Reset cancelled.")
             sys.exit(0)
 
         if args.list_all:
