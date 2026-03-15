@@ -1,7 +1,7 @@
 Source: zerowall
 Section: utils
 Priority: optional
-Maintainer: ZeroWall Team <support@zerowall.io>
+Maintainer: ZeroWall Team <boniyeamin.cse@gmail.com>
 Build-Depends: debhelper-compat (= 13), python3
 Standards-Version: 4.5.0
 Homepage: https://github.com/zerowall/zerowallcli
