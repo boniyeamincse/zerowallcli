@@ -1,4 +1,4 @@
-Source: zerowall
+Source: zerowallcli
 Section: utils
 Priority: optional
 Maintainer: ZeroWall Team <boniyeamin.cse@gmail.com>
@@ -6,7 +6,7 @@ Build-Depends: debhelper-compat (= 13), python3
 Standards-Version: 4.5.0
 Homepage: https://github.com/zerowall/zerowallcli
 
-Package: zerowall
+Package: zerowallcli
 Architecture: all
 Depends: python3, iptables, ${python3:Depends}, ${misc:Depends}
 Description: Lightweight CLI Linux Firewall
