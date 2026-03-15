@@ -1,0 +1,5 @@
+./bin/zerowall
+./core/firewall_engine.py
+./core/iptables_controller.py
+./core/logger.py
+./core/rule_manager.py

@@ -2,36 +2,31 @@
 
 ZeroWall is a modular, production-ready CLI-based host firewall tool for Linux that simplifies `iptables` management.
 
-## Features
+## 🚀 Features
 - **Simple Interface**: Easy-to-remember commands like `allow`, `block`, and `status`.
 - **Modular Design**: Separated CLI, Engine, and Controller layers.
 - **Production Ready**: Full logging to `/var/log/zerowall/` and support for Debian packaging.
 - **Fail-Safe**: Maintains established connections during resets.
 
-## Installation
+## 📦 Installation Methods
 
-### From .deb Package
+### Option 1: Debian Package (.deb) - Recommended
+Download the latest `.deb` release and install it:
 ```bash
-sudo dpkg -i zerowall_1.0.0-1_all.deb
+sudo dpkg -i zerowallcli_1.0.0-1_all.deb
 sudo apt-get install -f
 ```
 
-### From Source
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/zerowall/zerowallcli.git
-   cd zerowallcli
-   ```
-2. Make the binary executable:
-   ```bash
-   chmod +x bin/zerowall
-   ```
-3. (Optional) Symlink to `/usr/local/bin`:
-   ```bash
-   sudo ln -s $(pwd)/bin/zerowall /usr/local/bin/zerowall
-   ```
+### Option 2: Source Installation (GitHub)
+Clone the repo and run the automated installer:
+```bash
+git clone https://github.com/boniyeamincse/zerowallcli.git
+cd zerowallcli
+sudo chmod +x scripts/install.sh
+sudo ./scripts/install.sh
+```
 
-## Usage
+## 🛠️ Usage
 
 ```bash
 # Allow SSH
@@ -53,10 +48,17 @@ sudo zerowall reset
 sudo zerowall logs
 ```
 
-## Security Best Practices
+## 📄 Documentation
+- [Architecture](docs/architecture.md)
+- [Installation Guide](docs/installation.md)
+- [Usage Guide](docs/usage.md)
+- [Commands Cheatsheet](docs/cheatsheet.md)
+- [QA Test Report](docs/qa_report.md)
+
+## 🛡️ Security Best Practices
 1. **Principle of Least Privilege**: Only allow necessary ports.
 2. **Logs Monitoring**: Regularly check `zerowall logs` for suspicious activity.
-3. **Backup Rules**: Always verify your rules after a `reset` to ensure you haven't locked yourself out (though ZeroWall attempts to keep established sessions).
+3. **Backup Rules**: Always verify your rules after a `reset`.
 
-## License
+## 📜 License
 MIT License. See [LICENSE](LICENSE) for details.

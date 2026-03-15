@@ -1,0 +1,13 @@
+Package: zerowallcli
+Version: 1.0.0-1
+Architecture: all
+Maintainer: ZeroWall Team <boniyeamin.cse@gmail.com>
+Installed-Size: 23
+Depends: python3, iptables, python3:any
+Section: utils
+Priority: optional
+Homepage: https://github.com/zerowall/zerowallcli
+Description: Lightweight CLI Linux Firewall
+ ZeroWall is a modular, lightweight CLI firewall management tool for Linux.
+ It provides a user-friendly abstraction over iptables to manage host-based
+ security policies.

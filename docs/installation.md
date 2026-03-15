@@ -1,30 +1,60 @@
 # Installation Guide for ZeroWall
 
-ZeroWall can be installed as a Debian package or directly from source.
+ZeroWall supports two main installation methods for Linux (Debian, Ubuntu, Kali, etc.).
 
-## Prerequisites
-- Linux OS (Ubuntu, Debian, or similar)
+## 📋 Prerequisites
+- Linux OS (Debian-based preferred)
 - Python 3.6+
-- `iptables` installed and available in `$PATH`
-- Root privileges (`sudo`)
+- `iptables`
+- sudo privileges
 
-## Debian Package Installation (Recommended)
-Building the package:
+---
+
+## 1. Debian Package Installation (.deb)
+This is the cleanest method as it allows for easy updates and removal via `apt` or `dpkg`.
+
+### Build from source:
+1. Install build tools:
+   ```bash
+   sudo apt update && sudo apt install -y debhelper dh-python devscripts build-essential
+   ```
+2. Build the package:
+   ```bash
+   dpkg-buildpackage -us -uc -b
+   ```
+
+### Install:
 ```bash
-sudo apt-get install devscripts debhelper
-dpkg-buildpackage -us -uc -b
+sudo dpkg -i ../zerowallcli_1.0.0-1_all.deb
 ```
 
-Installing the package:
+---
+
+## 2. Source Installation (Manual/Script)
+Best for developers or if you want to run the latest code directly from GitHub.
+
+### Steps:
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/boniyeamincse/zerowallcli.git
+   cd zerowallcli
+   ```
+2. Run the installer script:
+   ```bash
+   sudo chmod +x scripts/install.sh
+   sudo ./scripts/install.sh
+   ```
+
+The script will:
+- Copy core modules to `/usr/lib/zerowall/`.
+- Create a global symlink at `/usr/local/bin/zerowall`.
+- Initialize logging at `/var/log/zerowall/`.
+
+---
+
+## 🔍 Post-Installation Check
+Verify the installation by running:
 ```bash
-sudo dpkg -i ../zerowall_1.0.0-1_all.deb
+zerowall --version
+sudo zerowall status
 ```
-
-## Source Installation
-For developers or quick testing:
-1. Clone the repo.
-2. Ensure you have root access.
-3. Run `bin/zerowall`.
-
-## Post-Installation
-ZeroWall logs activity to `/var/log/zerowall/firewall.log`. Ensure the directory exists and is writable by the user running the tool.

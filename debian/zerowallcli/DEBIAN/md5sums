@@ -1,0 +1,6 @@
+66d45f9d972c9c14938f51fc217c3f33  usr/bin/zerowall
+2da84ecd6679ac56d7fa57fa66fcde46  usr/lib/zerowall/core/firewall_engine.py
+838b3ff81cc59ce00f4cb9bda66ec88c  usr/lib/zerowall/core/iptables_controller.py
+01fcad50acb9c819a832700215a6d446  usr/lib/zerowall/core/logger.py
+d41d8cd98f00b204e9800998ecf8427e  usr/lib/zerowall/core/rule_manager.py
+523b020bd20ae24db0c549a47686f932  usr/share/doc/zerowallcli/changelog.Debian.gz
