@@ -3,13 +3,16 @@ import sys
 import os
 import argparse
 
-# Add the project root to sys.path to allow relative imports
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add the project root or system library path to sys.path
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(project_root)
+# Also add the system-wide installation path for Debian package
+sys.path.append("/usr/lib/zerowall")
 
 from core.firewall_engine import FirewallEngine
 from core.logger import logger
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 
 def check_root():
     """Checks if the script is running with root privileges."""
@@ -19,48 +22,83 @@ def check_root():
 
 def main():
     parser = argparse.ArgumentParser(
-        description="ZeroWall - Lightweight CLI Linux Firewall",
+        prog="zerowall",
+        description="Zerowall — Simple Firewall Management CLI",
+        usage="zerowall [OPTIONS] COMMAND [ARGS]",
         formatter_class=argparse.RawDescriptionHelpFormatter,
+        add_help=False,
         epilog="""
 Examples:
-  zerowall allow 22
-  zerowall block 192.168.1.100
-  zerowall unblock 192.168.1.100
-  zerowall status
-  zerowall reset
-  zerowall logs
+
+  View firewall configuration
+    zerowall --list-all
+    zerowall --list-ports
+    zerowall --list-services
+
+  Manage firewall rules
+    zerowall allow 22
+    zerowall allow 80
+    zerowall block 192.168.1.100
+    zerowall unblock 192.168.1.100
+
+  Zone inspection
+    zerowall --zone public --list-all
+
+  Permanent rules
+    zerowall allow 443 --permanent
+    zerowall block 192.168.1.100 --permanent
+
+  Reload firewall rules
+    zerowall --reload
         """
     )
 
-    parser.add_argument('-v', '--version', action='version', version=f"ZeroWall v{VERSION}")
-    
-    subparsers = parser.add_subparsers(dest='command', help='Commands')
+    # Commands (Positional)
+    subparsers = parser.add_subparsers(dest='command', title='Commands', metavar='') 
 
     # allow
-    allow_parser = subparsers.add_parser('allow', help='Allow incoming traffic on a port')
+    allow_parser = subparsers.add_parser('allow', help='Allow incoming traffic on a specific port', usage='zerowall allow <port>')
     allow_parser.add_argument('port', type=int, help='Port number')
     allow_parser.add_argument('--protocol', choices=['tcp', 'udp'], default='tcp', help='Protocol (default: tcp)')
 
     # block
-    block_parser = subparsers.add_parser('block', help='Block traffic from an IP')
+    block_parser = subparsers.add_parser('block', help='Block traffic from a specified IP address', usage='zerowall block <ip>')
     block_parser.add_argument('ip', help='IP address to block')
 
     # unblock
-    unblock_parser = subparsers.add_parser('unblock', help='Unblock traffic from an IP')
+    unblock_parser = subparsers.add_parser('unblock', help='Remove a block rule for a specified IP address', usage='zerowall unblock <ip>')
     unblock_parser.add_argument('ip', help='IP address to unblock')
 
     # status
-    subparsers.add_parser('status', help='Show firewall status')
+    subparsers.add_parser('status', help='Display the current firewall status (raw output)')
 
-    # reset
-    subparsers.add_parser('reset', help='Reset firewall to default policy')
+    # Global Options
+    global_group = parser.add_argument_group('Global Options')
+    global_group.add_argument('--help', action='help', help='Display this help message and exit')
+    global_group.add_argument('--version', action='version', version=f"ZeroWall v{VERSION}", help='Display Zerowall version information')
 
-    # logs
-    subparsers.add_parser('logs', help='Show firewall logs')
+    # Information Commands
+    info_group = parser.add_argument_group('Information Commands')
+    info_group.add_argument('--list-all', action='store_true', help='Display all active firewall settings')
+    info_group.add_argument('--list-ports', action='store_true', help='Display all currently open ports')
+    info_group.add_argument('--list-services', action='store_true', help='Display all enabled firewall services')
+    
+    # Zone Management
+    zone_group = parser.add_argument_group('Zone Management')
+    zone_group.add_argument('--get-zones', action='store_true', help='List all available firewall zones')
+    zone_group.add_argument('--get-active-zones', action='store_true', help='Display currently active zones')
+    zone_group.add_argument('--get-default-zone', action='store_true', help='Display the default firewall zone')
+    zone_group.add_argument('--zone', help='Inspect configuration for a specific zone', metavar='<ZONE>')
+
+    # Firewall Control
+    control_group = parser.add_argument_group('Firewall Control')
+    control_group.add_argument('--reload', action='store_true', help='Reload firewall rules without restarting the system')
+    control_group.add_argument('--reset', action='store_true', help='Reset the firewall configuration to default')
+    control_group.add_argument('--permanent', action='store_true', help='Apply rule changes permanently (persist after reboot)')
 
     args = parser.parse_args()
 
-    if not args.command:
+    if not args.command and not any([args.list_all, args.list_ports, args.list_services, args.reload, args.get_active_zones, args.get_zones, args.get_default_zone, args.reset]):
         parser.print_help()
         sys.exit(0)
 
@@ -70,14 +108,53 @@ Examples:
     engine = FirewallEngine()
 
     try:
+        # Handle Flags First
+        if args.reload:
+            print(engine.reload_firewall())
+            sys.exit(0)
+        
+        if args.get_active_zones:
+            print(engine.get_active_zones())
+            sys.exit(0)
+            
+        if args.get_zones:
+            print(engine.get_zones())
+            sys.exit(0)
+            
+        if args.get_default_zone:
+            print(engine.get_default_zone())
+            sys.exit(0)
+
+        if args.reset:
+            # Confirmation for reset
+            confirm = input("Are you sure you want to reset the firewall? This will set default policy to DROP. [y/N]: ")
+            if confirm.lower() == 'y':
+                print(engine.reset_firewall())
+            else:
+                print("Reset cancelled.")
+            sys.exit(0)
+
+        if args.list_all:
+            print(engine.list_all(zone=args.zone))
+            sys.exit(0)
+            
+        if args.list_ports:
+            print(engine.list_ports(zone=args.zone))
+            sys.exit(0)
+            
+        if args.list_services:
+            print(engine.list_services(zone=args.zone))
+            sys.exit(0)
+
+        # Handle Commands
         if args.command == 'allow':
-            print(engine.allow_port(args.port, args.protocol))
+            print(engine.allow_port(args.port, args.protocol, zone=args.zone, permanent=args.permanent))
         elif args.command == 'block':
-            print(engine.block_ip(args.ip))
+            print(engine.block_ip(args.ip, zone=args.zone, permanent=args.permanent))
         elif args.command == 'unblock':
-            print(engine.unblock_ip(args.ip))
+            print(engine.unblock_ip(args.ip, zone=args.zone, permanent=args.permanent))
         elif args.command == 'status':
-            print(engine.get_status())
+            print(engine.get_status(zone=args.zone))
         elif args.command == 'reset':
             # Confirmation for reset
             confirm = input("Are you sure you want to reset the firewall? This will set default policy to DROP. [y/N]: ")
