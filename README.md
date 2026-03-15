@@ -1,9 +1,9 @@
-# ZeroWall - Lightweight CLI Linux Firewall
+# ZeroWall — Lightweight CLI Linux Firewall
 
 ZeroWall is a modular, production-ready CLI-based host firewall tool for Linux that simplifies `iptables` management.
 
 ## 🚀 Features
-- **Standardized Interface**: Clean, professional CLI mirroring modern tools.
+- **Standardized Interface**: Zerowall — Simple Firewall Management CLI.
 - **Firewall Zones**: Group rules into logical zones like `public`, `home`, and `work`.
 - **Rule Persistence**: Optional `--permanent` flag to save rules across reboots.
 - **Fail-Safe**: Maintains established connections during resets to prevent lockouts.

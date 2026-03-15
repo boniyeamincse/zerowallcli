@@ -1,4 +1,4 @@
-# ZeroWall Usage Guide
+# ZeroWall — Usage Guide
 
 Detailed command reference for ZeroWall CLI.
 

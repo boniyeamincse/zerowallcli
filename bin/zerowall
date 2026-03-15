@@ -20,61 +20,78 @@ def check_root():
 def main():
     parser = argparse.ArgumentParser(
         prog="zerowall",
-        description="Zerowall - Simple Firewall Management CLI",
+        description="Zerowall — Simple Firewall Management CLI",
+        usage="zerowall [OPTIONS] COMMAND [ARGS]",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         add_help=False,
         epilog="""
 Examples:
-  zerowall --list-all
-  zerowall --list-ports
-  zerowall --list-services
-  zerowall --zone=public --list-all
-  zerowall --permanent --list-all
-  zerowall --reload
+
+  View firewall configuration
+    zerowall --list-all
+    zerowall --list-ports
+    zerowall --list-services
+
+  Manage firewall rules
+    zerowall allow 22
+    zerowall allow 80
+    zerowall block 192.168.1.100
+    zerowall unblock 192.168.1.100
+
+  Zone inspection
+    zerowall --zone public --list-all
+
+  Permanent rules
+    zerowall allow 443 --permanent
+    zerowall block 192.168.1.100 --permanent
+
+  Reload firewall rules
+    zerowall --reload
         """
     )
 
-    # Custom Help and Version
-    parser.add_argument('--help', action='help', help='Show this help message')
-    parser.add_argument('--version', action='version', version=f"ZeroWall v{VERSION}")
-    
-    # Information Commands
-    info_group = parser.add_argument_group('Information Commands')
-    info_group.add_argument('--list-all', action='store_true', help='List all active firewall settings')
-    info_group.add_argument('--list-ports', action='store_true', help='Show all open ports')
-    info_group.add_argument('--list-services', action='store_true', help='Show all enabled services')
-    
-    # Zone Management
-    zone_group = parser.add_argument_group('Zone Management')
-    zone_group.add_argument('--get-zones', action='store_true', help='List all available zones')
-    zone_group.add_argument('--get-active-zones', action='store_true', help='Show currently active zones')
-    zone_group.add_argument('--get-default-zone', action='store_true', help='Show default firewall zone')
-    zone_group.add_argument('--zone', help='Check configuration for a specific zone')
-
-    # Firewall Control
-    control_group = parser.add_argument_group('Firewall Control')
-    control_group.add_argument('--reload', action='store_true', help='Reload firewall rules')
-    control_group.add_argument('--reset', action='store_true', help='Reset firewall configuration')
-    control_group.add_argument('--permanent', action='store_true', help='Make changes permanent (use with commands)')
-
-    # Allow/Block/Unblock (Subcommands)
-    subparsers = parser.add_subparsers(dest='command', help='Commands')
+    # Commands (Positional)
+    subparsers = parser.add_subparsers(dest='command', title='Commands', metavar='') 
 
     # allow
-    allow_parser = subparsers.add_parser('allow', help='Allow incoming traffic on a port')
+    allow_parser = subparsers.add_parser('allow', help='Allow incoming traffic on a specific port', usage='zerowall allow <port>')
     allow_parser.add_argument('port', type=int, help='Port number')
     allow_parser.add_argument('--protocol', choices=['tcp', 'udp'], default='tcp', help='Protocol (default: tcp)')
 
     # block
-    block_parser = subparsers.add_parser('block', help='Block traffic from an IP')
+    block_parser = subparsers.add_parser('block', help='Block traffic from a specified IP address', usage='zerowall block <ip>')
     block_parser.add_argument('ip', help='IP address to block')
 
     # unblock
-    unblock_parser = subparsers.add_parser('unblock', help='Unblock traffic from an IP')
+    unblock_parser = subparsers.add_parser('unblock', help='Remove a block rule for a specified IP address', usage='zerowall unblock <ip>')
     unblock_parser.add_argument('ip', help='IP address to unblock')
 
     # status
-    subparsers.add_parser('status', help='Show firewall status (raw)')
+    subparsers.add_parser('status', help='Display the current firewall status (raw output)')
+
+    # Global Options
+    global_group = parser.add_argument_group('Global Options')
+    global_group.add_argument('--help', action='help', help='Display this help message and exit')
+    global_group.add_argument('--version', action='version', version=f"ZeroWall v{VERSION}", help='Display Zerowall version information')
+
+    # Information Commands
+    info_group = parser.add_argument_group('Information Commands')
+    info_group.add_argument('--list-all', action='store_true', help='Display all active firewall settings')
+    info_group.add_argument('--list-ports', action='store_true', help='Display all currently open ports')
+    info_group.add_argument('--list-services', action='store_true', help='Display all enabled firewall services')
+    
+    # Zone Management
+    zone_group = parser.add_argument_group('Zone Management')
+    zone_group.add_argument('--get-zones', action='store_true', help='List all available firewall zones')
+    zone_group.add_argument('--get-active-zones', action='store_true', help='Display currently active zones')
+    zone_group.add_argument('--get-default-zone', action='store_true', help='Display the default firewall zone')
+    zone_group.add_argument('--zone', help='Inspect configuration for a specific zone', metavar='<ZONE>')
+
+    # Firewall Control
+    control_group = parser.add_argument_group('Firewall Control')
+    control_group.add_argument('--reload', action='store_true', help='Reload firewall rules without restarting the system')
+    control_group.add_argument('--reset', action='store_true', help='Reset the firewall configuration to default')
+    control_group.add_argument('--permanent', action='store_true', help='Apply rule changes permanently (persist after reboot)')
 
     args = parser.parse_args()
 
