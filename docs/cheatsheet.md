@@ -9,7 +9,10 @@ A quick reference guide for managing your Linux firewall with ZeroWall.
 | **Allow Port** | Opens a specific TCP/UDP port. | `sudo zerowall allow 80` |
 | **Block IP** | Drops all traffic from a specific IP. | `sudo zerowall block 1.2.3.4` |
 | **Unblock IP** | Removes a block rule for an IP. | `sudo zerowall unblock 1.2.3.4` |
-| **Status** | Shows current rules and stats (Shows all allowed ports). | `sudo zerowall status` |
+| **Status** | Shows current rules and stats (raw). | `sudo zerowall status` |
+| **List All** | Shows active settings (human-readable). | `sudo zerowall list-all` |
+| **List Ports** | Shows only open/allowed ports. | `sudo zerowall list-ports` |
+| **List Services** | Shows only enabled services (ssh, http, etc). | `sudo zerowall list-services` |
 | **Reset** | Wipes rules and sets secure defaults. | `sudo zerowall reset` |
 | **Logs** | Shows recent firewall activity. | `sudo zerowall logs` |
 

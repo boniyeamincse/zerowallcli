@@ -33,9 +33,10 @@ class IptablesController:
 
     def list_rules(self, chain=None):
         """Lists current firewall rules."""
-        cmd = ["iptables", "-L", "-n", "-v"]
         if chain:
-            cmd.append(chain)
+            cmd = ["iptables", "-L", chain, "-n", "-v"]
+        else:
+            cmd = ["iptables", "-L", "-n", "-v"]
         return self.run_command(cmd)
 
     def flush_chain(self, chain):

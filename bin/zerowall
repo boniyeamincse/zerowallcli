@@ -50,7 +50,16 @@ Examples:
     unblock_parser.add_argument('ip', help='IP address to unblock')
 
     # status
-    subparsers.add_parser('status', help='Show firewall status')
+    subparsers.add_parser('status', help='Show firewall status (raw)')
+
+    # list-all
+    subparsers.add_parser('list-all', help='List all active settings')
+
+    # list-ports
+    subparsers.add_parser('list-ports', help='List only open ports')
+
+    # list-services
+    subparsers.add_parser('list-services', help='List only enabled services')
 
     # reset
     subparsers.add_parser('reset', help='Reset firewall to default policy')
@@ -78,6 +87,12 @@ Examples:
             print(engine.unblock_ip(args.ip))
         elif args.command == 'status':
             print(engine.get_status())
+        elif args.command == 'list-all':
+            print(engine.list_all())
+        elif args.command == 'list-ports':
+            print(engine.list_ports())
+        elif args.command == 'list-services':
+            print(engine.list_services())
         elif args.command == 'reset':
             # Confirmation for reset
             confirm = input("Are you sure you want to reset the firewall? This will set default policy to DROP. [y/N]: ")

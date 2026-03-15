@@ -41,8 +41,78 @@ class FirewallEngine:
         return f"Successfully unblocked IP: {ip}."
 
     def get_status(self):
-        """Returns the current status of the firewall."""
+        """Returns the current status of the firewall (raw iptables)."""
         return self.controller.list_rules()
+
+    def list_all(self):
+        """Returns active settings in a human-readable format."""
+        raw_rules = self.controller.list_rules("INPUT")
+        # Parse logic could be complex, for now we provide a filtered view
+        lines = raw_rules.split('\n')
+        active_settings = ["--- ZeroWall Active Settings ---"]
+        active_settings.append(f"Default Policy: {self._get_default_policy()}")
+        active_settings.append("\nActive Rules:")
+        for line in lines:
+            if "ACCEPT" in line or "DROP" in line or "REJECT" in line:
+                active_settings.append(line.strip())
+        return "\n".join(active_settings)
+
+    def list_ports(self):
+        """Returns only the list of open ports."""
+        raw_rules = self.controller.list_rules("INPUT")
+        ports = []
+        import re
+        # Regex to find dpt:<port>
+        pattern = re.compile(r'dpt:(\d+)')
+        for line in raw_rules.split('\n'):
+            if "ACCEPT" in line:
+                match = pattern.search(line)
+                if match:
+                    ports.append(match.group(1))
+        
+        if not ports:
+            return "No open ports found."
+        return "Open Ports: " + ", ".join(sorted(list(set(ports))))
+
+    def list_services(self):
+        """Returns only the enabled services based on port mapping."""
+        # Common service mapping
+        service_map = {
+            '22': 'ssh',
+            '80': 'http',
+            '443': 'https',
+            '21': 'ftp',
+            '25': 'smtp',
+            '53': 'dns',
+            '3306': 'mysql',
+            '5432': 'postgresql',
+            '6379': 'redis'
+        }
+        
+        raw_rules = self.controller.list_rules("INPUT")
+        services = []
+        import re
+        pattern = re.compile(r'dpt:(\d+)')
+        for line in raw_rules.split('\n'):
+            if "ACCEPT" in line:
+                match = pattern.search(line)
+                if match:
+                    port = match.group(1)
+                    services.append(service_map.get(port, f"unknown({port})"))
+        
+        if not services:
+            return "No services enabled."
+        return "Enabled Services: " + ", ".join(sorted(list(set(services))))
+
+    def _get_default_policy(self):
+        """Helper to get current default policy."""
+        try:
+            raw = self.controller.list_rules("INPUT")
+            if "policy DROP" in raw:
+                return "DROP"
+            return "ACCEPT"
+        except:
+            return "Unknown"
 
     def reset_firewall(self):
         """Resets the firewall to a safe default state (DROP all incoming)."""

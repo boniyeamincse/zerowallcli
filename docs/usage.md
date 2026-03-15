@@ -20,6 +20,15 @@ Removes a previously added block rule for the IP.
 ### `status`
 Displays current `iptables` rules with packet counts and statistics.
 
+### `list-all`
+Lists all active firewall settings in a human-readable format.
+
+### `list-ports`
+Lists only the open/allowed ports.
+
+### `list-services`
+Lists enabled services based on the open ports.
+
 ### `reset`
 Resets the firewall to a "Secure Default" state:
 1. Flushes all rules in the `INPUT` chain.
